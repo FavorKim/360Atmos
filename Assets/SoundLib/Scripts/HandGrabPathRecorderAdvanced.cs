@@ -16,7 +16,7 @@ public enum SmoothingMode { None, Exponential, MovingAverage, OneEuro }
 /// - Catmull-Rom 곡선 보간 + 일정 간격 리샘플로 각짐 제거
 /// - ClearPath()로 라인/이력 완전 초기화
 /// </summary>
-[RequireComponent(typeof(LineRenderer))]
+[RequireComponent(typeof(LineRenderer),typeof(AudioSource))]
 public class HandGrabPathRecorderAdvanced : MonoBehaviour
 {
     // ────────────── Recording / Playback 기본 ──────────────
@@ -85,12 +85,15 @@ public class HandGrabPathRecorderAdvanced : MonoBehaviour
     Coroutine playbackCo;
     Coroutine pokeFadeCo;
 
+
     // ────────────── 스무더 구현 ──────────────
     HandPathSmoother smoother;
 
     // ────────────── Call Back  ──────────────
     public UnityEvent OnStartRecord;
     public UnityEvent OnStopRecord;
+    public UnityEvent OnStartPlayBack;
+    public UnityEvent OnClearPath;
 
     void Awake()
     {
@@ -114,6 +117,7 @@ public class HandGrabPathRecorderAdvanced : MonoBehaviour
 
         smoother = new HandPathSmoother();
         smoother.ConfigureOneEuro(oe_freq, oe_minCutoff, oe_beta, oe_dCutoff);
+
     }
 
     void OnValidate()
@@ -186,12 +190,15 @@ public class HandGrabPathRecorderAdvanced : MonoBehaviour
         StopRecording();
         isGrabbed = false;
         ShowPokeButton(false);
-
+        
         // 녹화가 종료되었고 경로가 있으면 자동 재생
         if (!isRecording && hasPath && (playbackSmoothedPath ? smoothDisplay.Count : rawPoints.Count) >= 2)
         {
             playbackCo = StartCoroutine(PlaybackAlongPath());
+            GuideManager.Instance.ProgressGuide(4);
         }
+        else
+            SuppressPhysics();
     }
 
     // ────────────── Poke 버튼 이벤트(인스펙터 연결) ──────────────
@@ -204,6 +211,7 @@ public class HandGrabPathRecorderAdvanced : MonoBehaviour
         if (!isGrabbed) return; // Grab 중에만 허용
         if (!isRecording) 
         {
+            GuideManager.Instance.ProgressGuide(3);
             OnStartRecord.Invoke();
             StartRecording(); 
         }
@@ -253,6 +261,9 @@ public class HandGrabPathRecorderAdvanced : MonoBehaviour
 
         SuppressPhysics();
 
+        // 콜백호출
+        OnStartPlayBack.Invoke();
+
         // 시작점 스냅
         transform.position = path[0];
 
@@ -293,6 +304,8 @@ public class HandGrabPathRecorderAdvanced : MonoBehaviour
     // ────────────── 초기화(완전 리셋) ──────────────
     public void ClearPath()
     {
+        OnClearPath?.Invoke();
+
         rawPoints.Clear();
         rawTimes.Clear();
         smoothDisplay.Clear();
@@ -302,6 +315,8 @@ public class HandGrabPathRecorderAdvanced : MonoBehaviour
 
         hasPath = false;
         isRecording = false;
+
+        SuppressPhysics();
     }
 
     // ────────────── 표시용 Poke 버튼 페이드 ──────────────

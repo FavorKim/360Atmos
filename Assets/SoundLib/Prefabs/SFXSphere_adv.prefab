@@ -281,7 +281,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4f598264fcdded439d6d157c98e8e66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  texture: {fileID: 2800000, guid: 6f8162cf09cfd5e418ffadbf7a12bbab, type: 3}
+  texture: {fileID: 2800000, guid: a0937aa3a4f5be24897a37e9f11f3e93, type: 3}
 --- !u!1 &2005402838665017822
 GameObject:
   m_ObjectHideFlags: 0
@@ -505,7 +505,7 @@ MonoBehaviour:
   _supportedGrabTypes: 3
   _pinchGrabRules:
     _thumbRequirement: 1
-    _indexRequirement: 1
+    _indexRequirement: 2
     _middleRequirement: 1
     _ringRequirement: 0
     _pinkyRequirement: 0
@@ -529,6 +529,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6266077334182846755}
+  - component: {fileID: 3794598468012749760}
   m_Layer: 0
   m_Name: '[Poke]  OnOffToggle'
   m_TagString: Untagged
@@ -552,6 +553,21 @@ Transform:
   - {fileID: 4723712734447312863}
   m_Father: {fileID: 6596529712108567551}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3794598468012749760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5093468826868153333}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 84cef41cbe153d646998d63f87f98a29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cameraTransform: {fileID: 0}
+  yAxisOnly: 1
+  rotationOffsetEuler: {x: 0, y: 0, z: 0}
 --- !u!1 &5687839594583264350
 GameObject:
   m_ObjectHideFlags: 0
@@ -701,7 +717,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   blockId: 5838e892-31a4-4f65-a415-dc108aefa14c
-  instanceId: 18752a10-d9ab-472f-bb80-8bced9eaafdb
+  instanceId: 7b42335c-f19d-4974-a2f3-5015a94c5f3e
   version: 1
   installationRoutineCheckpoint:
     _installationRoutineId: c88fc9f2-e9d1-41ea-b937-cdaf92a806d0
@@ -1118,7 +1134,7 @@ AudioSource:
   m_audioClip: {fileID: 8300000, guid: 80d327ebcf9dd6740acf025ff6882d8c, type: 3}
   m_Resource: {fileID: 8300000, guid: 80d327ebcf9dd6740acf025ff6882d8c, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -1425,3 +1441,33 @@ MonoBehaviour:
   OnStopRecord:
     m_PersistentCalls:
       m_Calls: []
+  OnStartPlayBack:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 4830846582008361244}
+        m_TargetAssemblyTypeName: UnityEngine.AudioSource, UnityEngine
+        m_MethodName: set_volume
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 1
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnClearPath:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 4830846582008361244}
+        m_TargetAssemblyTypeName: UnityEngine.AudioSource, UnityEngine
+        m_MethodName: set_volume
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2

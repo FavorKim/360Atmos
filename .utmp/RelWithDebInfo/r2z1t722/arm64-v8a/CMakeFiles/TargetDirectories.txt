@@ -1,0 +1,5 @@
+C:/Users/ICT/360aTMOS/.utmp/RelWithDebInfo/r2z1t722/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/ICT/360aTMOS/.utmp/RelWithDebInfo/r2z1t722/arm64-v8a/CMakeFiles/rebuild_cache.dir
+C:/Users/ICT/360aTMOS/.utmp/RelWithDebInfo/r2z1t722/arm64-v8a/GameActivity/CMakeFiles/game.dir
+C:/Users/ICT/360aTMOS/.utmp/RelWithDebInfo/r2z1t722/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+C:/Users/ICT/360aTMOS/.utmp/RelWithDebInfo/r2z1t722/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir

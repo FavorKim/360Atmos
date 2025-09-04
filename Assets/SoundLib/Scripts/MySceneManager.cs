@@ -26,17 +26,26 @@ public class MySceneManager : MonoBehaviour
         }
     }
 
+
+    [SerializeField] Material skyBoxMat;
     VideoAudioStarter VAS;
     PlaySphere[] spheres;
     [SerializeField] string state;
+    [SerializeField] GameObject resetBtn;
+
+    Material activatedMat;
 
     [SerializeField] VideoPlayer logo;
     [SerializeField] VideoPlayer VP;
     [SerializeField] float fifoTime;
     [SerializeField] GameObject uis;
 
+    HandGrabPathRecorderAdvanced[] records;
+
     public UnityEvent OnPlaySceneLoaded;
+    public UnityEvent OnPlaySceneStartLoading;
     public UnityEvent OnLobbySceneLoaded;
+    public UnityEvent OnLobbySceneStartLoading;
 
     private void Start()
     {
@@ -44,22 +53,37 @@ public class MySceneManager : MonoBehaviour
         DontDestroyOnLoad(this.gameObject);
         VAS = FindAnyObjectByType<VideoAudioStarter>();
         spheres = FindObjectsByType<PlaySphere>(FindObjectsSortMode.None);
+        records = FindObjectsByType<HandGrabPathRecorderAdvanced>(FindObjectsSortMode.None);
         state = "LOBBY";
+        logo.prepareCompleted += OnPrepared;
         logo.gameObject.SetActive(false);
+        records[0].transform.parent.gameObject.SetActive(false);
+        activatedMat = skyBoxMat;
+        skyBoxMat.SetFloat("_Exposure", 1);
+        resetBtn.SetActive(true);
     }
 
 
+    void OnPrepared(VideoPlayer vp)
+    {
+        vp.gameObject.SetActive(true);
+        var mat = vp.targetMaterialRenderer.material; // or sharedMaterial
+        mat.mainTextureOffset = new Vector2(0f, 0.001f); // 아래 0.1% 잘라내기
+        mat.mainTextureScale = new Vector2(1f, 0.998f); // 전체를 99.8%만 표시
+    }
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.V))
             SetSceneState("PLAY");
+        if (Input.GetKeyDown(KeyCode.Z))
+            SetSceneState("LOBBY");
     }
 
     IEnumerator CorFI()
     {
         uis.gameObject.SetActive(true);
         logo.gameObject.SetActive(false);
-        var mat = VP.GetComponent<MeshRenderer>().material;
+        var mat = activatedMat;
         float t = 0;
         while (t < fifoTime)
         {
@@ -73,7 +97,7 @@ public class MySceneManager : MonoBehaviour
     IEnumerator CorFO()
     {
         uis.gameObject.SetActive(false);
-        var mat = VP.GetComponent<MeshRenderer>().material;
+        var mat = activatedMat;
         float t = 0;
         while (t < fifoTime)
         {
@@ -87,20 +111,40 @@ public class MySceneManager : MonoBehaviour
 
     IEnumerator CorFOFI(string state)
     {
+        switch (state)
+        {
+            case "LOBBY":
+                OnLobbySceneStartLoading.Invoke();
+                break;
+            case "PLAY":
+                OnPlaySceneStartLoading.Invoke();
+                break;
+            default:
+                break;
+        }
         StartCoroutine(CorFO());
 
         yield return new WaitWhile(() => !logo.isPlaying);
+
+
         yield return new WaitWhile(() => logo.isPlaying);
 
-        StartCoroutine(CorFI());
         this.state = state;
+
+        activatedMat = state == "LOBBY" ? skyBoxMat : VP.GetComponent<MeshRenderer>().material;
+
+        StartCoroutine(CorFI());
+
+        
         switch (state)
         {
             case "LOBBY":
                 OnLobbySceneLoaded.Invoke();
+                VP.gameObject.SetActive(false);
                 break;
             case "PLAY":
                 OnPlaySceneLoaded.Invoke();
+                VP.gameObject.SetActive(true);
                 break;
             default:
                 break;
@@ -132,5 +176,14 @@ public class MySceneManager : MonoBehaviour
                 break;
         }
     }
-    
+
+    public void ResetAll()
+    {
+        foreach (var s in spheres)
+            s.ResetPos();
+
+        foreach (var r in records)
+            r.ClearPath();
+    }
+
 }

@@ -38,9 +38,12 @@ public class PlaySphere : MonoBehaviour
 
 
     [SerializeField] bool alwaysPlay;
-    private void Start()
+    private void Awake()
     {
         originPos = transform.position;
+    }
+    private void Start()
+    {
         grab = GetComponentInChildren<HandGrabInteractable>();
         if (grab != null)
             grab.WhenStateChanged += Grab_WhenStateChanged;
@@ -57,20 +60,22 @@ public class PlaySphere : MonoBehaviour
         // OnGrab
         if(obj.NewState == InteractableState.Select)
         {
+            GuideManager.Instance.ProgressGuide(1);
             OnGrab?.Invoke();
             anim.enabled = false;
-            if(!alwaysPlay)
             audioSource.volume = 1;
         }
         // OnReleased
         else if(obj.NewState == InteractableState.Normal)
         {
-            OnReleased?.Invoke();
+            audioSource.volume = 0;
             anim.enabled = true;
-            if(!alwaysPlay)
-                audioSource.volume=0;
             if (vas != null)
+            {
                 transform.position = vas.transform.position;
+                GuideManager.Instance.ProgressGuide(2);
+            }
+            OnReleased?.Invoke();
         }
     }
 
