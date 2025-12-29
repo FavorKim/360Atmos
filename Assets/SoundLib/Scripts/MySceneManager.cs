@@ -1,4 +1,6 @@
+using NUnit.Framework;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
@@ -40,6 +42,8 @@ public class MySceneManager : MonoBehaviour
     [SerializeField] float fifoTime;
     [SerializeField] GameObject uis;
 
+    [SerializeField] List<GameObject> SFXList;
+
     HandGrabPathRecorderAdvanced[] records;
 
     public UnityEvent OnPlaySceneLoaded;
@@ -61,6 +65,8 @@ public class MySceneManager : MonoBehaviour
         activatedMat = skyBoxMat;
         skyBoxMat.SetFloat("_Exposure", 1);
         resetBtn.SetActive(true);
+        foreach (var g in SFXList)
+            g.SetActive(false);
     }
 
 
@@ -156,6 +162,12 @@ public class MySceneManager : MonoBehaviour
         StopAllCoroutines();
         StartCoroutine(CorFOFI(state));
     }
+
+    public void ToggleSFX(bool isActive)
+    {
+        SFXList[LayerManager.CurIndex].SetActive(isActive);
+    }
+
 
     public void OnPokePowerOff()
     {
