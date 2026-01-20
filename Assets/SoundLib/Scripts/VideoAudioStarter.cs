@@ -1,6 +1,7 @@
 using Oculus.Interaction;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Video;
@@ -9,6 +10,7 @@ using UnityEngine.Video;
 public class VideoAudioStarter : MonoBehaviour
 {
     [SerializeField] VideoPlayer VP;
+    //[SerializeField] MultiChanelSpeakerSetter MS;
     [SerializeField] AudioSource AS;
     [SerializeField] PlaySphere sphere;
     [SerializeField] PokeInteractable playBtn;
@@ -21,6 +23,17 @@ public class VideoAudioStarter : MonoBehaviour
         spheres = FindObjectsByType<PlaySphere>(FindObjectsSortMode.InstanceID);
         recoders = FindObjectsByType<HandGrabPathRecorder>(FindObjectsSortMode.InstanceID);
     }
+
+    public void SetSpheresOrigin()
+    {
+        if(spheres== null)
+            spheres = FindObjectsByType<PlaySphere>(FindObjectsSortMode.InstanceID);
+
+
+        foreach (var s in spheres)
+            s.SetOriginPos();
+    }
+
     private void Update()
     {
         playBtn.gameObject.SetActive(sphere != null);
@@ -44,11 +57,16 @@ public class VideoAudioStarter : MonoBehaviour
     {
         if (sphere != null)
         {
-            VP.clip = sphere.VideoClip;
-            AS.clip = sphere.AudioClip;
+            string path = Path.Combine(Application.persistentDataPath, "Video", sphere.fileName+".mp4");
+            VP.source = VideoSource.Url;
+            VP.url = path;
+
+            
 
             VP.Play();
+            AS.clip = sphere.AudioClip;
             AS.Play();
+            //MS.SetSpeakers(sphere.audioName);
         }
     }
 
@@ -56,8 +74,9 @@ public class VideoAudioStarter : MonoBehaviour
     {
         VP.Stop();
         AS.Stop();
+        //MS.ResetSpeakers();
 
-        VP.clip = null;
+        VP.url = null;
         AS.clip = null;
 
         sphere = null;

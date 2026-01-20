@@ -95,6 +95,11 @@ public class HandGrabPathRecorderAdvanced : MonoBehaviour
     public UnityEvent OnStartPlayBack;
     public UnityEvent OnClearPath;
 
+    private void Start()
+    {
+
+        MySceneManager.Instance.AddRecord(this);
+    }
     void Awake()
     {
         if (!line) line = GetComponent<LineRenderer>();

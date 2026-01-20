@@ -17,7 +17,7 @@ public class MySceneManager : MonoBehaviour
             if (instance == null)
             {
                 instance = FindAnyObjectByType<MySceneManager>();
-                if(instance == null)
+                if (instance == null)
                 {
                     GameObject gobj = new GameObject("MySceneManager");
                     instance = gobj.AddComponent<MySceneManager>();
@@ -31,11 +31,12 @@ public class MySceneManager : MonoBehaviour
 
     [SerializeField] Material skyBoxMat;
     VideoAudioStarter VAS;
-    PlaySphere[] spheres;
+    List<PlaySphere> spheres = new();
     [SerializeField] string state;
     [SerializeField] GameObject resetBtn;
 
     Material activatedMat;
+    Texture skyTexture;
 
     [SerializeField] VideoPlayer logo;
     [SerializeField] VideoPlayer VP;
@@ -44,7 +45,7 @@ public class MySceneManager : MonoBehaviour
 
     [SerializeField] List<GameObject> SFXList;
 
-    HandGrabPathRecorderAdvanced[] records;
+    List<HandGrabPathRecorderAdvanced> records = new();
 
     public UnityEvent OnPlaySceneLoaded;
     public UnityEvent OnPlaySceneStartLoading;
@@ -56,26 +57,34 @@ public class MySceneManager : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(this.gameObject);
         VAS = FindAnyObjectByType<VideoAudioStarter>();
-        spheres = FindObjectsByType<PlaySphere>(FindObjectsSortMode.None);
-        records = FindObjectsByType<HandGrabPathRecorderAdvanced>(FindObjectsSortMode.None);
+
         state = "LOBBY";
         logo.prepareCompleted += OnPrepared;
         logo.gameObject.SetActive(false);
-        records[0].transform.parent.gameObject.SetActive(false);
+
+        EnableSFXs(false);
+
         activatedMat = skyBoxMat;
-        skyBoxMat.SetFloat("_Exposure", 1);
+        skyBoxMat.SetFloat("_Exposure", 0);
         resetBtn.SetActive(true);
-        foreach (var g in SFXList)
-            g.SetActive(false);
+
+        skyTexture = skyBoxMat.mainTexture;
     }
 
+    void EnableSFXs(bool enable)
+    {
+        foreach (var s in SFXList)
+            s.SetActive(enable);
+    }
 
     void OnPrepared(VideoPlayer vp)
     {
         vp.gameObject.SetActive(true);
+
         var mat = vp.targetMaterialRenderer.material; // or sharedMaterial
         mat.mainTextureOffset = new Vector2(0f, 0.001f); // 아래 0.1% 잘라내기
         mat.mainTextureScale = new Vector2(1f, 0.998f); // 전체를 99.8%만 표시
+
     }
     private void Update()
     {
@@ -83,6 +92,7 @@ public class MySceneManager : MonoBehaviour
             SetSceneState("PLAY");
         if (Input.GetKeyDown(KeyCode.Z))
             SetSceneState("LOBBY");
+
     }
 
     IEnumerator CorFI()
@@ -137,11 +147,12 @@ public class MySceneManager : MonoBehaviour
 
         this.state = state;
 
-        activatedMat = state == "LOBBY" ? skyBoxMat : VP.GetComponent<MeshRenderer>().material;
-
+        //activatedMat = state == "LOBBY" ? skyBoxMat : VP.GetComponent<MeshRenderer>().material;
+        Texture t = state == "LOBBY" ? skyBoxMat.mainTexture : VP.targetTexture;
+        skyBoxMat.SetTexture("_MainTex", t);
         StartCoroutine(CorFI());
 
-        
+
         switch (state)
         {
             case "LOBBY":
@@ -155,6 +166,12 @@ public class MySceneManager : MonoBehaviour
             default:
                 break;
         }
+    }
+
+    public void FILobby()
+    {
+        activatedMat = skyBoxMat;
+        StartCoroutine(CorFI());
     }
 
     public void SetSceneState(string state)
@@ -191,11 +208,27 @@ public class MySceneManager : MonoBehaviour
 
     public void ResetAll()
     {
-        foreach (var s in spheres)
-            s.ResetPos();
+        if (spheres != null)
+            foreach (var s in spheres)
+                s.ResetPos();
 
-        foreach (var r in records)
-            r.ClearPath();
+        if (records != null)
+            foreach (var r in records)
+                r.ClearPath();
     }
 
+    public void AddPlaySphere(PlaySphere sphere)
+    {
+        spheres.Add(sphere);
+    }
+
+    public void AddRecord(HandGrabPathRecorderAdvanced record)
+    {
+        records.Add(record);
+    }
+
+    private void OnApplicationQuit()
+    {
+        skyBoxMat.mainTexture = skyTexture;
+    }
 }
