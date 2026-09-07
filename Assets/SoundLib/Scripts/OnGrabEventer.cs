@@ -5,29 +5,32 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
-[RequireComponent (typeof(HandGrabInteractable))]
-public class OnGrabEventer : MonoBehaviour
+namespace SoundLibrary
 {
-    public UnityEvent OnGrab;
-    public UnityEvent OnReleased;
-
-    void Start()
+    [RequireComponent(typeof(HandGrabInteractable))]
+    public class OnGrabEventer : MonoBehaviour
     {
-        var grab = GetComponent<HandGrabInteractable>();
+        public UnityEvent OnGrab;
+        public UnityEvent OnReleased;
 
-        grab.WhenStateChanged += Grab_WhenStateChanged;
-    }
-    private void Grab_WhenStateChanged(InteractableStateChangeArgs obj)
-    {
-        // OnGrab
-        if (obj.NewState == InteractableState.Select)
+        void Start()
         {
-            OnGrab?.Invoke();
+            var grab = GetComponent<HandGrabInteractable>();
+
+            grab.WhenStateChanged += Grab_WhenStateChanged;
         }
-        // OnReleased
-        else if (obj.NewState == InteractableState.Normal)
+        private void Grab_WhenStateChanged(InteractableStateChangeArgs obj)
         {
-            OnReleased?.Invoke();
+            // OnGrab
+            if (obj.NewState == InteractableState.Select)
+            {
+                OnGrab?.Invoke();
+            }
+            // OnReleased
+            else if (obj.NewState == InteractableState.Normal)
+            {
+                OnReleased?.Invoke();
+            }
         }
     }
 }

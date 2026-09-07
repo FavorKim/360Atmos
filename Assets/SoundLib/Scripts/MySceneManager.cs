@@ -6,229 +6,230 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Video;
 
-
-public class MySceneManager : MonoBehaviour
+namespace SoundLibrary
 {
-    private static MySceneManager instance;
-    public static MySceneManager Instance
+    public class MySceneManager : MonoBehaviour
     {
-        get
+        private static MySceneManager instance;
+        public static MySceneManager Instance
         {
-            if (instance == null)
+            get
             {
-                instance = FindAnyObjectByType<MySceneManager>();
                 if (instance == null)
                 {
-                    GameObject gobj = new GameObject("MySceneManager");
-                    instance = gobj.AddComponent<MySceneManager>();
-                    DontDestroyOnLoad(instance);
+                    instance = FindAnyObjectByType<MySceneManager>();
+                    if (instance == null)
+                    {
+                        GameObject gobj = new GameObject("MySceneManager");
+                        instance = gobj.AddComponent<MySceneManager>();
+                        DontDestroyOnLoad(instance);
+                    }
                 }
+                return instance;
             }
-            return instance;
         }
-    }
 
 
-    [SerializeField] Material skyBoxMat;
-    VideoAudioStarter VAS;
-    List<PlaySphere> spheres = new();
-    [SerializeField] string state;
-    [SerializeField] GameObject resetBtn;
+        [SerializeField] Material skyBoxMat;
+        VideoAudioStarter VAS;
+        List<PlaySphere> spheres = new();
+        [SerializeField] string state;
+        [SerializeField] GameObject resetBtn;
 
-    Material activatedMat;
-    Texture skyTexture;
+        Material activatedMat;
+        Texture skyTexture;
 
-    [SerializeField] VideoPlayer logo;
-    [SerializeField] VideoPlayer VP;
-    [SerializeField] float fifoTime;
-    [SerializeField] GameObject uis;
+        [SerializeField] VideoPlayer logo;
+        [SerializeField] VideoPlayer VP;
+        [SerializeField] float fifoTime;
+        [SerializeField] GameObject uis;
 
-    [SerializeField] List<GameObject> SFXList;
+        [SerializeField] List<GameObject> SFXList;
 
-    List<HandGrabPathRecorderAdvanced> records = new();
+        List<HandGrabPathRecorderAdvanced> records = new();
 
-    public UnityEvent OnPlaySceneLoaded;
-    public UnityEvent OnPlaySceneStartLoading;
-    public UnityEvent OnLobbySceneLoaded;
-    public UnityEvent OnLobbySceneStartLoading;
+        public UnityEvent OnPlaySceneLoaded;
+        public UnityEvent OnPlaySceneStartLoading;
+        public UnityEvent OnLobbySceneLoaded;
+        public UnityEvent OnLobbySceneStartLoading;
 
-    private void Start()
-    {
-        instance = this;
-        DontDestroyOnLoad(this.gameObject);
-        VAS = FindAnyObjectByType<VideoAudioStarter>();
-
-        state = "LOBBY";
-        logo.prepareCompleted += OnPrepared;
-        logo.gameObject.SetActive(false);
-
-        EnableSFXs(false);
-
-        activatedMat = skyBoxMat;
-        skyBoxMat.SetFloat("_Exposure", 0);
-        resetBtn.SetActive(true);
-
-        skyTexture = skyBoxMat.mainTexture;
-    }
-
-    void EnableSFXs(bool enable)
-    {
-        foreach (var s in SFXList)
-            s.SetActive(enable);
-    }
-
-    void OnPrepared(VideoPlayer vp)
-    {
-        vp.gameObject.SetActive(true);
-
-        var mat = vp.targetMaterialRenderer.material; // or sharedMaterial
-        mat.mainTextureOffset = new Vector2(0f, 0.001f); // 아래 0.1% 잘라내기
-        mat.mainTextureScale = new Vector2(1f, 0.998f); // 전체를 99.8%만 표시
-
-    }
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.V))
-            SetSceneState("PLAY");
-        if (Input.GetKeyDown(KeyCode.Z))
-            SetSceneState("LOBBY");
-
-    }
-
-    IEnumerator CorFI()
-    {
-        uis.gameObject.SetActive(true);
-        logo.gameObject.SetActive(false);
-        var mat = activatedMat;
-        float t = 0;
-        while (t < fifoTime)
+        private void Start()
         {
-            mat.SetFloat("_Exposure", t / fifoTime);
-            t += Time.deltaTime;
-            yield return null;
+            instance = this;
+            DontDestroyOnLoad(this.gameObject);
+            VAS = FindAnyObjectByType<VideoAudioStarter>();
+
+            state = "LOBBY";
+            logo.prepareCompleted += OnPrepared;
+            logo.gameObject.SetActive(false);
+
+            EnableSFXs(false);
+
+            activatedMat = skyBoxMat;
+            skyBoxMat.SetFloat("_Exposure", 0);
+            resetBtn.SetActive(true);
+
+            skyTexture = skyBoxMat.mainTexture;
         }
-        mat.SetFloat("_Exposure", 1);
-    }
-
-    IEnumerator CorFO()
-    {
-        uis.gameObject.SetActive(false);
-        var mat = activatedMat;
-        float t = 0;
-        while (t < fifoTime)
+        void EnableSFXs(bool enable)
         {
-            mat.SetFloat("_Exposure", 1 - t / fifoTime);
-            t += Time.deltaTime;
-            yield return null;
+            foreach (var s in SFXList)
+                s.SetActive(enable);
         }
-        mat.SetFloat("_Exposure", 0);
-        logo.gameObject.SetActive(true);
-    }
 
-    IEnumerator CorFOFI(string state)
-    {
-        switch (state)
+        void OnPrepared(VideoPlayer vp)
         {
-            case "LOBBY":
-                OnLobbySceneStartLoading.Invoke();
-                break;
-            case "PLAY":
-                OnPlaySceneStartLoading.Invoke();
-                break;
-            default:
-                break;
+            VP.gameObject.SetActive(true);
+
+            var mat = VP.targetMaterialRenderer.material; // or sharedMaterial
+            mat.mainTextureOffset = new Vector2(0f, 0.001f); // 아래 0.1% 잘라내기
+            mat.mainTextureScale = new Vector2(1f, 0.998f); // 전체를 99.8%만 표시
+
         }
-        StartCoroutine(CorFO());
-
-        yield return new WaitWhile(() => !logo.isPlaying);
-
-
-        yield return new WaitWhile(() => logo.isPlaying);
-
-        this.state = state;
-
-        //activatedMat = state == "LOBBY" ? skyBoxMat : VP.GetComponent<MeshRenderer>().material;
-        Texture t = state == "LOBBY" ? skyBoxMat.mainTexture : VP.targetTexture;
-        skyBoxMat.SetTexture("_MainTex", t);
-        StartCoroutine(CorFI());
-
-
-        switch (state)
+        private void Update()
         {
-            case "LOBBY":
-                OnLobbySceneLoaded.Invoke();
-                VP.gameObject.SetActive(false);
-                break;
-            case "PLAY":
-                OnPlaySceneLoaded.Invoke();
-                VP.gameObject.SetActive(true);
-                break;
-            default:
-                break;
+            if (Input.GetKeyDown(KeyCode.V))
+                SetSceneState("PLAY");
+            if (Input.GetKeyDown(KeyCode.Z))
+                SetSceneState("LOBBY");
+
         }
-    }
 
-    public void FILobby()
-    {
-        activatedMat = skyBoxMat;
-        StartCoroutine(CorFI());
-    }
-
-    public void SetSceneState(string state)
-    {
-        StopAllCoroutines();
-        StartCoroutine(CorFOFI(state));
-    }
-
-    public void ToggleSFX(bool isActive)
-    {
-        SFXList[LayerManager.CurIndex].SetActive(isActive);
-    }
-
-
-    public void OnPokePowerOff()
-    {
-        switch (state)
+        IEnumerator CorFI()
         {
-            case "LOBBY":
+            uis.gameObject.SetActive(true);
+            logo.gameObject.SetActive(false);
+            var mat = activatedMat;
+            float t = 0;
+            while (t < fifoTime)
+            {
+                mat.SetFloat("_Exposure", t / fifoTime);
+                t += Time.deltaTime;
+                yield return null;
+            }
+            mat.SetFloat("_Exposure", 1);
+        }
+
+        IEnumerator CorFO()
+        {
+            uis.gameObject.SetActive(false);
+            var mat = activatedMat;
+            float t = 0;
+            while (t < fifoTime)
+            {
+                mat.SetFloat("_Exposure", 1 - t / fifoTime);
+                t += Time.deltaTime;
+                yield return null;
+            }
+            mat.SetFloat("_Exposure", 0);
+            logo.gameObject.SetActive(true);
+        }
+
+        IEnumerator CorFOFI(string state)
+        {
+            switch (state)
+            {
+                case "LOBBY":
+                    OnLobbySceneStartLoading.Invoke();
+                    break;
+                case "PLAY":
+                    OnPlaySceneStartLoading.Invoke();
+                    break;
+                default:
+                    break;
+            }
+            StartCoroutine(CorFO());
+
+            yield return new WaitWhile(() => !logo.isPlaying);
+
+
+            yield return new WaitWhile(() => logo.isPlaying);
+
+            this.state = state;
+
+            //activatedMat = state == "LOBBY" ? skyBoxMat : VP.GetComponent<MeshRenderer>().material;
+            Texture t = state == "LOBBY" ? skyBoxMat.mainTexture : VP.targetTexture;
+            skyBoxMat.SetTexture("_MainTex", t);
+            StartCoroutine(CorFI());
+
+
+            switch (state)
+            {
+                case "LOBBY":
+                    OnLobbySceneLoaded.Invoke();
+                    //VP.gameObject.SetActive(false);
+                    break;
+                case "PLAY":
+                    OnPlaySceneLoaded.Invoke();
+                    //VP.gameObject.SetActive(true);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public void FILobby()
+        {
+            activatedMat = skyBoxMat;
+            StartCoroutine(CorFI());
+        }
+
+        public void SetSceneState(string state)
+        {
+            StopAllCoroutines();
+            StartCoroutine(CorFOFI(state));
+        }
+
+        public void ToggleSFX(bool isActive)
+        {
+            SFXList[LayerManager.CurIndex].SetActive(isActive);
+        }
+
+
+        public void OnPokePowerOff()
+        {
+            switch (state)
+            {
+                case "LOBBY":
 #if UNITY_EDITOR
-                EditorApplication.ExitPlaymode();
+                    EditorApplication.ExitPlaymode();
 #else
                 Application.Quit();
 #endif
-                break;
-            case "PLAY":
-                Instance.SetSceneState("LOBBY");
-                break;
+                    break;
+                case "PLAY":
+                    Instance.SetSceneState("LOBBY");
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
+            }
         }
-    }
 
-    public void ResetAll()
-    {
-        if (spheres != null)
-            foreach (var s in spheres)
-                s.ResetPos();
+        public void ResetAll()
+        {
+            if (spheres != null)
+                foreach (var s in spheres)
+                    s.ResetPos();
 
-        if (records != null)
-            foreach (var r in records)
-                r.ClearPath();
-    }
+            if (records != null)
+                foreach (var r in records)
+                    r.ClearPath();
+        }
 
-    public void AddPlaySphere(PlaySphere sphere)
-    {
-        spheres.Add(sphere);
-    }
+        public void AddPlaySphere(PlaySphere sphere)
+        {
+            spheres.Add(sphere);
+        }
 
-    public void AddRecord(HandGrabPathRecorderAdvanced record)
-    {
-        records.Add(record);
-    }
+        public void AddRecord(HandGrabPathRecorderAdvanced record)
+        {
+            records.Add(record);
+        }
 
-    private void OnApplicationQuit()
-    {
-        skyBoxMat.mainTexture = skyTexture;
+        private void OnApplicationQuit()
+        {
+            skyBoxMat.mainTexture = skyTexture;
+        }
     }
 }

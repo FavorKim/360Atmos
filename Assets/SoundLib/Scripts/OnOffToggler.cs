@@ -1,9 +1,11 @@
 using UnityEngine;
-
-public class OnOffToggler : MonoBehaviour
+namespace SoundLibrary
 {
-    public void SetActiveToggle()
+    public class OnOffToggler : MonoBehaviour
     {
-        gameObject.SetActive(!gameObject.activeSelf);
+        public void SetActiveToggle()
+        {
+            gameObject.SetActive(!gameObject.activeSelf);
+        }
     }
 }

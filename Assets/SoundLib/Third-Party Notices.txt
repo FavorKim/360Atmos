@@ -1,0 +1,35 @@
+Third-Party Notices.txt
+
+This package contains third-party software components governed by the license(s) indicated below.
+
+--------------------------------------------------
+Component Name: TextMesh Pro
+License Type: Unity Companion License (for Unity-dependent projects)
+Copyright: TextMesh Pro copyright © 2014-2019 Unity Technologies ApS
+License Details:
+Licensed under the Unity Companion License for Unity-dependent projects.
+Official license/reference:
+https://docs.unity3d.com/Packages/com.unity.textmeshpro@3.0/license/LICENSE.html
+https://unity.com/legal/licenses/unity-companion-license
+
+--------------------------------------------------
+Component Name: Liberation Sans (used to create the bundled "LiberationSans SDF" font asset)
+License Type: SIL Open Font License, Version 1.1
+Copyright:
+Digitized data copyright (c) 2010 Google Corporation
+with Reserved Font Arimo, Tinos and Cousine.
+Copyright (c) 2012 Red Hat, Inc.
+with Reserved Font Name Liberation.
+License Details:
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+Official / reference license text:
+http://scripts.sil.org/OFL
+Upstream reference:
+https://github.com/liberationfonts/liberation-fonts/blob/main/LICENSE
+
+--------------------------------------------------
+Notes
+
+All 360 video files, Ambix audio files, and original SFX included in this package are original works created by MetaverseHub and are not third-party components.
+
+If this package includes additional third-party SDKs, fonts, images, icons, shaders, sample assets, or code not listed above, they must also be disclosed in this file with their respective licenses.

@@ -1,35 +1,37 @@
 using System.Collections.Generic;
 using UnityEngine;
-
-public class GuideManager : MonoBehaviour
+namespace SoundLibrary
 {
-    static GuideManager instance;
-    public static GuideManager Instance
+    public class GuideManager : MonoBehaviour
     {
-        get { return instance; }
-    }
-
-    [SerializeField] List<GameObject> Guides;
-    private int curGuideCount = 0;
-
-    private void Awake()
-    {
-        instance = this;
-        curGuideCount = 0;
-    }
-
-    public void ProgressGuide(int index)
-    {
-        if(index >= Guides.Count)
+        static GuideManager instance;
+        public static GuideManager Instance
         {
-            gameObject.SetActive(false);
+            get { return instance; }
         }
-        if (curGuideCount + 1 == index)
-        {
-            Guides[curGuideCount].SetActive(false);
-            curGuideCount++;
-            Guides[curGuideCount].SetActive(true);
-        }
-    }
 
+        [SerializeField] List<GameObject> Guides;
+        private int curGuideCount = 0;
+
+        private void Awake()
+        {
+            instance = this;
+            curGuideCount = 0;
+        }
+
+        public void ProgressGuide(int index)
+        {
+            if (index >= Guides.Count)
+            {
+                gameObject.SetActive(false);
+            }
+            if (curGuideCount + 1 == index)
+            {
+                Guides[curGuideCount].SetActive(false);
+                curGuideCount++;
+                Guides[curGuideCount].SetActive(true);
+            }
+        }
+
+    }
 }

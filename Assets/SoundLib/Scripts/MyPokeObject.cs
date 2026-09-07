@@ -1,25 +1,27 @@
 using Oculus.Interaction;
 using UnityEngine;
 using UnityEngine.Events;
-
-[RequireComponent(typeof(PokeInteractable))]
-public class MyPokeObject : MonoBehaviour
+namespace SoundLibrary
 {
-    PokeInteractable poke;
-    [SerializeField] UnityEvent onPokeCallBack;
-
-    void Start()
+    [RequireComponent(typeof(PokeInteractable))]
+    public class MyPokeObject : MonoBehaviour
     {
-        poke = GetComponent<PokeInteractable>();
-        poke.WhenStateChanged += Poke_WhenStateChanged;
-    }
+        PokeInteractable poke;
+        [SerializeField] UnityEvent onPokeCallBack;
 
-    private void Poke_WhenStateChanged(InteractableStateChangeArgs obj)
-    {
-        if(obj.NewState == InteractableState.Select)
+        void Start()
         {
-            onPokeCallBack?.Invoke();
+            poke = GetComponent<PokeInteractable>();
+            poke.WhenStateChanged += Poke_WhenStateChanged;
         }
-    }
 
+        private void Poke_WhenStateChanged(InteractableStateChangeArgs obj)
+        {
+            if (obj.NewState == InteractableState.Select)
+            {
+                onPokeCallBack?.Invoke();
+            }
+        }
+
+    }
 }

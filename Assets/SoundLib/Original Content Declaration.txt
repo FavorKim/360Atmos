@@ -1,0 +1,5 @@
+All audio and video files included in this package are original works created by MetaverseHub.
+
+No third-party audio, video, image, font, or other media assets are included in this package unless explicitly listed in Third-Party Notices.txt.
+
+Copyright © 2026 MetaverseHub. All rights reserved.

@@ -7,520 +7,522 @@ using UnityEngine.Events;
 using Oculus.Interaction;
 using Oculus.Interaction.HandGrab;
 #endif
-
-public enum SmoothingMode { None, Exponential, MovingAverage, OneEuro }
-
-/// <summary>
-/// Grab Áß Poke ¹öÆ°À¸·Î ³ìÈ­ Åä±Û ¡æ °æ·Î ¶óÀÎ ½Ç½Ã°£ ½º¹«µù Ç¥½Ã ¡æ Grab ÇØÁ¦ ½Ã ÀÚµ¿ Àç»ý.
-/// - ¼Õ ¶³¸² ¾ïÁ¦(One Euro/MA/Exponential ¼±ÅÃ)
-/// - Catmull-Rom °î¼± º¸°£ + ÀÏÁ¤ °£°Ý ¸®»ùÇÃ·Î °¢Áü Á¦°Å
-/// - ClearPath()·Î ¶óÀÎ/ÀÌ·Â ¿ÏÀü ÃÊ±âÈ­
-/// </summary>
-[RequireComponent(typeof(LineRenderer),typeof(AudioSource))]
-public class HandGrabPathRecorderAdvanced : MonoBehaviour
+namespace SoundLibrary
 {
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Recording / Playback ±âº» ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    [Header("Record & Playback")]
-    [Tooltip("³ìÈ­ ´ç½Ã Å¸ÀÌ¹ÖÀ¸·Î Àç»ýÇÒÁö(Off¸é ±ÕÀÏ ¼Óµµ)")]
-    public bool useRecordedTiming = false;
+    public enum SmoothingMode { None, Exponential, MovingAverage, OneEuro }
 
-    [Tooltip("useRecordedTimingÀÌ falseÀÏ ¶§ 1ÃÊ´ç ÀÌµ¿ °Å¸®(À¯´Ö/ÃÊ)")]
-    public float playbackSpeed = 0.6f;
+    /// <summary>
+    /// Grab Áß Poke ¹öÆ°À¸·Î ³ìÈ­ Åä±Û ¡æ °æ·Î ¶óÀÎ ½Ç½Ã°£ ½º¹«µù Ç¥½Ã ¡æ Grab ÇØÁ¦ ½Ã ÀÚµ¿ Àç»ý.
+    /// - ¼Õ ¶³¸² ¾ïÁ¦(One Euro/MA/Exponential ¼±ÅÃ)
+    /// - Catmull-Rom °î¼± º¸°£ + ÀÏÁ¤ °£°Ý ¸®»ùÇÃ·Î °¢Áü Á¦°Å
+    /// - ClearPath()·Î ¶óÀÎ/ÀÌ·Â ¿ÏÀü ÃÊ±âÈ­
+    /// </summary>
+    [RequireComponent(typeof(LineRenderer), typeof(AudioSource))]
+    public class HandGrabPathRecorderAdvanced : MonoBehaviour
+    {
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Recording / Playback ±âº» ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        [Header("Record & Playback")]
+        [Tooltip("³ìÈ­ ´ç½Ã Å¸ÀÌ¹ÖÀ¸·Î Àç»ýÇÒÁö(Off¸é ±ÕÀÏ ¼Óµµ)")]
+        public bool useRecordedTiming = false;
 
-    [Tooltip("Àç»ý ½Ã ½º¹«µùµÈ °æ·Î¸¦ µû¸¦Áö(Off¸é ¿ø½Ã Æ÷ÀÎÆ®)")]
-    public bool playbackSmoothedPath = true;
+        [Tooltip("useRecordedTimingÀÌ falseÀÏ ¶§ 1ÃÊ´ç ÀÌµ¿ °Å¸®(À¯´Ö/ÃÊ)")]
+        public float playbackSpeed = 0.6f;
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ¼Õ ¶³¸² ¾ïÁ¦ & ¶óÀÎ ºÎµå·´°Ô ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    [Header("Anti-Jitter & Curve")]
-    public SmoothingMode smoothing = SmoothingMode.OneEuro;
+        [Tooltip("Àç»ý ½Ã ½º¹«µùµÈ °æ·Î¸¦ µû¸¦Áö(Off¸é ¿ø½Ã Æ÷ÀÎÆ®)")]
+        public bool playbackSmoothedPath = true;
 
-    [Tooltip("¿¬¼Ó »ùÇÃ ÃÖ¼Ò ½Ã°£ °£°Ý(ÃÊ)")]
-    public float minTimeStep = 0.01f;
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ¼Õ ¶³¸² ¾ïÁ¦ & ¶óÀÎ ºÎµå·´°Ô ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        [Header("Anti-Jitter & Curve")]
+        public SmoothingMode smoothing = SmoothingMode.OneEuro;
 
-    [Tooltip("¿¬¼Ó »ùÇÃ ÃÖ¼Ò °ø°£ °£°Ý(¹Ì¼¼ ¶³¸² °ú¹Ð ¹æÁö)")]
-    public float minPointDistance = 0.03f;
+        [Tooltip("¿¬¼Ó »ùÇÃ ÃÖ¼Ò ½Ã°£ °£°Ý(ÃÊ)")]
+        public float minTimeStep = 0.01f;
 
-    [Tooltip("¶óÀÎ Ç¥½Ã¿ë ¸®»ùÇÃ °£°Ý(°ªÀÌ ÀÛÀ»¼ö·Ï ´õ ¸Å²ô·´Áö¸¸ Æ÷ÀÎÆ® ¼ö Áõ°¡)")]
-    public float resampleSpacing = 0.03f;
+        [Tooltip("¿¬¼Ó »ùÇÃ ÃÖ¼Ò °ø°£ °£°Ý(¹Ì¼¼ ¶³¸² °ú¹Ð ¹æÁö)")]
+        public float minPointDistance = 0.03f;
 
-    // OneEuro ±âº»°ª(Quest/VR ±ÇÀå)
-    [Header("One Euro Settings")]
-    public float oe_freq = 90f;
-    public float oe_minCutoff = 1.2f;
-    public float oe_beta = 0.4f;
-    public float oe_dCutoff = 1.0f;
+        [Tooltip("¶óÀÎ Ç¥½Ã¿ë ¸®»ùÇÃ °£°Ý(°ªÀÌ ÀÛÀ»¼ö·Ï ´õ ¸Å²ô·´Áö¸¸ Æ÷ÀÎÆ® ¼ö Áõ°¡)")]
+        public float resampleSpacing = 0.03f;
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ¶óÀÎ/¸ÓÆ¼¸®¾ó ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    [Header("Line")]
-    public LineRenderer line;          // ÀÚµ¿ ÇÒ´ç
-    public Material lineMaterial;      // ÀÖÀ¸¸é Àû¿ë
-    public float lineWidth = 0.01f;
-    public bool showLineWhileRecording = true;
-    public bool keepLineVisibleAfterRecording = true;
+        // OneEuro ±âº»°ª(Quest/VR ±ÇÀå)
+        [Header("One Euro Settings")]
+        public float oe_freq = 90f;
+        public float oe_minCutoff = 1.2f;
+        public float oe_beta = 0.4f;
+        public float oe_dCutoff = 1.0f;
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Poke ¹öÆ° UI ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    [Header("Poke Button (Grab Áß¿¡¸¸ Ç¥½Ã)")]
-    public GameObject pokeButtonRoot;  // ³ìÈ­ Åä±Û¿ë PokeInteractable ·çÆ®(ÀÚ½Ä)
-    public CanvasGroup pokeCanvasGroup; // ÀÖÀ¸¸é ÆäÀÌµå »ç¿ë
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ¶óÀÎ/¸ÓÆ¼¸®¾ó ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        [Header("Line")]
+        public LineRenderer line;          // ÀÚµ¿ ÇÒ´ç
+        public Material lineMaterial;      // ÀÖÀ¸¸é Àû¿ë
+        public float lineWidth = 0.01f;
+        public bool showLineWhileRecording = true;
+        public bool keepLineVisibleAfterRecording = true;
 
-    [Header("Optional")]
-    public Rigidbody rb;
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Poke ¹öÆ° UI ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        [Header("Poke Button (Grab Áß¿¡¸¸ Ç¥½Ã)")]
+        public GameObject pokeButtonRoot;  // ³ìÈ­ Åä±Û¿ë PokeInteractable ·çÆ®(ÀÚ½Ä)
+        public CanvasGroup pokeCanvasGroup; // ÀÖÀ¸¸é ÆäÀÌµå »ç¿ë
+
+        [Header("Optional")]
+        public Rigidbody rb;
 
 #if OCULUS_INTEGRATION_PRESENT
     HandGrabInteractable handGrab;
 #endif
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ³»ºÎ »óÅÂ ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    bool isGrabbed = false;
-    bool isRecording = false;
-    bool hasPath = false;
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ³»ºÎ »óÅÂ ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        bool isGrabbed = false;
+        bool isRecording = false;
+        bool hasPath = false;
 
-    readonly List<Vector3> rawPoints = new();       // ¿øº» Æ÷ÀÎÆ®(³ìÈ­ ±âÁØ)
-    readonly List<float> rawTimes = new();       // ³ìÈ­ ½Ã°£(¿É¼Ç)
-    readonly List<Vector3> smoothDisplay = new();   // ¶óÀÎ Ç¥½Ã¿ë ½º¹«µù/¸®»ùÇÃ °á°ú
+        readonly List<Vector3> rawPoints = new();       // ¿øº» Æ÷ÀÎÆ®(³ìÈ­ ±âÁØ)
+        readonly List<float> rawTimes = new();       // ³ìÈ­ ½Ã°£(¿É¼Ç)
+        readonly List<Vector3> smoothDisplay = new();   // ¶óÀÎ Ç¥½Ã¿ë ½º¹«µù/¸®»ùÇÃ °á°ú
 
-    float recordStartTime;
-    float lastSampleTime = -999f;
+        float recordStartTime;
+        float lastSampleTime = -999f;
 
-    Coroutine playbackCo;
-    Coroutine pokeFadeCo;
+        Coroutine playbackCo;
+        Coroutine pokeFadeCo;
 
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ½º¹«´õ ±¸Çö ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    HandPathSmoother smoother;
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ½º¹«´õ ±¸Çö ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        HandPathSmoother smoother;
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Call Back  ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    public UnityEvent OnStartRecord;
-    public UnityEvent OnStopRecord;
-    public UnityEvent OnStartPlayBack;
-    public UnityEvent OnClearPath;
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Call Back  ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        public UnityEvent OnStartRecord;
+        public UnityEvent OnStopRecord;
+        public UnityEvent OnStartPlayBack;
+        public UnityEvent OnClearPath;
 
-    private void Start()
-    {
+        private void Start()
+        {
 
-        MySceneManager.Instance.AddRecord(this);
-    }
-    void Awake()
-    {
-        if (!line) line = GetComponent<LineRenderer>();
-        if (!rb) rb = GetComponent<Rigidbody>();
+            MySceneManager.Instance.AddRecord(this);
+        }
+        void Awake()
+        {
+            if (!line) line = GetComponent<LineRenderer>();
+            if (!rb) rb = GetComponent<Rigidbody>();
 
-        if (lineMaterial) line.material = lineMaterial;
-        line.widthMultiplier = lineWidth;
-        line.useWorldSpace = true;
-        line.textureMode = LineTextureMode.Tile;   // ½ºÅ©·Ñ/Å¸ÀÏ ÀüÁ¦
-        line.alignment = LineAlignment.View;
-        line.positionCount = 0;
-        line.enabled = false;
+            if (lineMaterial) line.material = lineMaterial;
+            line.widthMultiplier = lineWidth;
+            line.useWorldSpace = true;
+            line.textureMode = LineTextureMode.Tile;   // ½ºÅ©·Ñ/Å¸ÀÏ ÀüÁ¦
+            line.alignment = LineAlignment.View;
+            line.positionCount = 0;
+            line.enabled = false;
 
-        if (pokeButtonRoot) pokeButtonRoot.SetActive(false);
-        if (pokeCanvasGroup) pokeCanvasGroup.alpha = 0f;
+            if (pokeButtonRoot) pokeButtonRoot.SetActive(false);
+            if (pokeCanvasGroup) pokeCanvasGroup.alpha = 0f;
 
 #if OCULUS_INTEGRATION_PRESENT
         handGrab = GetComponent<HandGrabInteractable>();
 #endif
 
-        smoother = new HandPathSmoother();
-        smoother.ConfigureOneEuro(oe_freq, oe_minCutoff, oe_beta, oe_dCutoff);
+            smoother = new HandPathSmoother();
+            smoother.ConfigureOneEuro(oe_freq, oe_minCutoff, oe_beta, oe_dCutoff);
 
-    }
-
-    void OnValidate()
-    {
-        if (line)
-        {
-            line.widthMultiplier = lineWidth;
-            line.textureMode = LineTextureMode.Tile;
         }
-    }
 
-    void Update()
-    {
-        if (!isRecording || !isGrabbed) return;
-
-        float now = Time.time;
-        float dt = now - lastSampleTime;
-        if (dt < minTimeStep) return;
-
-        Vector3 current = transform.position;
-
-        if (rawPoints.Count > 0 && Vector3.Distance(rawPoints[^1], current) < minPointDistance)
-            return;
-
-        lastSampleTime = now;
-
-        // 1) ¿øº» ±â·Ï
-        rawPoints.Add(current);
-        rawTimes.Add(now - recordStartTime);
-
-        // 2) ½º¹«µù ´Ü°è
-        smoother.mode = smoothing;
-        var smooth = smoother.Step(current, dt);
-
-        // 3) Catmull-Rom + ÀÏÁ¤ °£°Ý ¸®»ùÇÃ(¿øº» ¸®½ºÆ® ±âÁØ)
-        var display = CatmullRom.ResampleSmooth(rawPoints, Mathf.Max(0.005f, resampleSpacing));
-        smoothDisplay.Clear();
-        smoothDisplay.AddRange(display);
-
-        // 4) ¶óÀÎ ¾÷µ¥ÀÌÆ®(½º¹«µù °á°ú·Î Ç¥½Ã)
-        if (showLineWhileRecording)
+        void OnValidate()
         {
-            line.enabled = true;
-            line.positionCount = smoothDisplay.Count;
-            if (smoothDisplay.Count > 0)
-                line.SetPositions(smoothDisplay.ToArray());
+            if (line)
+            {
+                line.widthMultiplier = lineWidth;
+                line.textureMode = LineTextureMode.Tile;
+            }
         }
-    }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ HandGrab ÀÌº¥Æ®(ÀÎ½ºÆåÅÍ¿¡¼­ ¿¬°á) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    public void OnGrabbed()
-    {
-        isGrabbed = true;
-        ShowPokeButton(true);
-
-        if (playbackCo != null)
+        void Update()
         {
-            OnStopRecord.Invoke();
-            StopCoroutine(playbackCo);
-            playbackCo = null;
-            RestorePhysics();
+            if (!isRecording || !isGrabbed) return;
+
+            float now = Time.time;
+            float dt = now - lastSampleTime;
+            if (dt < minTimeStep) return;
+
+            Vector3 current = transform.position;
+
+            if (rawPoints.Count > 0 && Vector3.Distance(rawPoints[^1], current) < minPointDistance)
+                return;
+
+            lastSampleTime = now;
+
+            // 1) ¿øº» ±â·Ï
+            rawPoints.Add(current);
+            rawTimes.Add(now - recordStartTime);
+
+            // 2) ½º¹«µù ´Ü°è
+            smoother.mode = smoothing;
+            var smooth = smoother.Step(current, dt);
+
+            // 3) Catmull-Rom + ÀÏÁ¤ °£°Ý ¸®»ùÇÃ(¿øº» ¸®½ºÆ® ±âÁØ)
+            var display = CatmullRom.ResampleSmooth(rawPoints, Mathf.Max(0.005f, resampleSpacing));
+            smoothDisplay.Clear();
+            smoothDisplay.AddRange(display);
+
+            // 4) ¶óÀÎ ¾÷µ¥ÀÌÆ®(½º¹«µù °á°ú·Î Ç¥½Ã)
+            if (showLineWhileRecording)
+            {
+                line.enabled = true;
+                line.positionCount = smoothDisplay.Count;
+                if (smoothDisplay.Count > 0)
+                    line.SetPositions(smoothDisplay.ToArray());
+            }
+        }
+
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ HandGrab ÀÌº¥Æ®(ÀÎ½ºÆåÅÍ¿¡¼­ ¿¬°á) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        public void OnGrabbed()
+        {
+            isGrabbed = true;
+            ShowPokeButton(true);
+
+            if (playbackCo != null)
+            {
+                OnStopRecord.Invoke();
+                StopCoroutine(playbackCo);
+                playbackCo = null;
+                RestorePhysics();
 #if OCULUS_INTEGRATION_PRESENT
             if (handGrab) handGrab.enabled = true;
 #endif
+            }
         }
-    }
 
-    public void OnReleased()
-    {
-        StopRecording();
-        isGrabbed = false;
-        ShowPokeButton(false);
-        
-        // ³ìÈ­°¡ Á¾·áµÇ¾ú°í °æ·Î°¡ ÀÖÀ¸¸é ÀÚµ¿ Àç»ý
-        if (!isRecording && hasPath && (playbackSmoothedPath ? smoothDisplay.Count : rawPoints.Count) >= 2)
+        public void OnReleased()
         {
-            playbackCo = StartCoroutine(PlaybackAlongPath());
-            GuideManager.Instance.ProgressGuide(4);
-        }
-        else
-            SuppressPhysics();
-    }
+            StopRecording();
+            isGrabbed = false;
+            ShowPokeButton(false);
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Poke ¹öÆ° ÀÌº¥Æ®(ÀÎ½ºÆåÅÍ ¿¬°á) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    public void OnPokeRecord() => ToggleRecord();
-    public void OnPokeReset() => ClearPath();
-
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ³ìÈ­ Åä±Û ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    public void ToggleRecord()
-    {
-        if (!isGrabbed) return; // Grab Áß¿¡¸¸ Çã¿ë
-        if (!isRecording) 
-        {
-            GuideManager.Instance.ProgressGuide(3);
-            OnStartRecord.Invoke();
-            StartRecording(); 
-        }
-    }
-
-    void StartRecording()
-    {
-        // ¿ÏÀü ÃÊ±âÈ­ ÈÄ ½ÃÀÛ
-        rawPoints.Clear();
-        rawTimes.Clear();
-        smoothDisplay.Clear();
-        line.positionCount = 0;
-
-        isRecording = true;
-        hasPath = false;
-        recordStartTime = Time.time;
-        lastSampleTime = recordStartTime;
-
-        if (showLineWhileRecording) line.enabled = true;
-
-        // One Euro ÃÊ±âÈ­ Àç¼³Á¤
-        smoother.ConfigureOneEuro(oe_freq, oe_minCutoff, oe_beta, oe_dCutoff);
-    }
-
-    void StopRecording()
-    {
-        isRecording = false;
-        hasPath = (playbackSmoothedPath ? smoothDisplay.Count : rawPoints.Count) >= 2;
-
-        if (!keepLineVisibleAfterRecording)
-            line.enabled = false;
-        else
-        {
-            // ³ìÈ­ Á¾·á ½Ã ¸¶Áö¸· ½º¹«µùµÈ °æ·Î·Î °íÁ¤
-            line.enabled = true;
-            line.positionCount = smoothDisplay.Count;
-            if (smoothDisplay.Count > 0)
-                line.SetPositions(smoothDisplay.ToArray());
-        }
-    }
-
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Àç»ý ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    IEnumerator PlaybackAlongPath()
-    {
-        var path = playbackSmoothedPath ? smoothDisplay : rawPoints;
-        if (path.Count < 2) yield break;
-
-        SuppressPhysics();
-
-        // ÄÝ¹éÈ£Ãâ
-        OnStartPlayBack.Invoke();
-
-        // ½ÃÀÛÁ¡ ½º³À
-        transform.position = path[0];
-
-        for (int i = 0; i < path.Count - 1; i++)
-        {
-            Vector3 a = path[i];
-            Vector3 b = path[i + 1];
-
-            float segDuration;
-            if (useRecordedTiming && !playbackSmoothedPath && rawTimes.Count == rawPoints.Count)
+            // ³ìÈ­°¡ Á¾·áµÇ¾ú°í °æ·Î°¡ ÀÖÀ¸¸é ÀÚµ¿ Àç»ý
+            if (!isRecording && hasPath && (playbackSmoothedPath ? smoothDisplay.Count : rawPoints.Count) >= 2)
             {
-                segDuration = Mathf.Max(0.0001f, rawTimes[i + 1] - rawTimes[i]);
+                playbackCo = StartCoroutine(PlaybackAlongPath());
+                GuideManager.Instance.ProgressGuide(4);
             }
             else
-            {
-                float dist = Vector3.Distance(a, b);
-                segDuration = Mathf.Max(0.0001f, dist / Mathf.Max(0.0001f, playbackSpeed));
-            }
+                SuppressPhysics();
+        }
 
-            float t = 0f;
-            while (t < segDuration)
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Poke ¹öÆ° ÀÌº¥Æ®(ÀÎ½ºÆåÅÍ ¿¬°á) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        public void OnPokeRecord() => ToggleRecord();
+        public void OnPokeReset() => ClearPath();
+
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ³ìÈ­ Åä±Û ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        public void ToggleRecord()
+        {
+            if (!isGrabbed) return; // Grab Áß¿¡¸¸ Çã¿ë
+            if (!isRecording)
             {
-                t += Time.deltaTime;
-                float u = Mathf.Clamp01(t / segDuration);
-                transform.position = Vector3.Lerp(a, b, u);
-                yield return null;
+                GuideManager.Instance.ProgressGuide(3);
+                OnStartRecord.Invoke();
+                StartRecording();
             }
         }
 
-        RestorePhysics();
-        playbackCo = null;
+        void StartRecording()
+        {
+            // ¿ÏÀü ÃÊ±âÈ­ ÈÄ ½ÃÀÛ
+            rawPoints.Clear();
+            rawTimes.Clear();
+            smoothDisplay.Clear();
+            line.positionCount = 0;
+
+            isRecording = true;
+            hasPath = false;
+            recordStartTime = Time.time;
+            lastSampleTime = recordStartTime;
+
+            if (showLineWhileRecording) line.enabled = true;
+
+            // One Euro ÃÊ±âÈ­ Àç¼³Á¤
+            smoother.ConfigureOneEuro(oe_freq, oe_minCutoff, oe_beta, oe_dCutoff);
+        }
+
+        void StopRecording()
+        {
+            isRecording = false;
+            hasPath = (playbackSmoothedPath ? smoothDisplay.Count : rawPoints.Count) >= 2;
+
+            if (!keepLineVisibleAfterRecording)
+                line.enabled = false;
+            else
+            {
+                // ³ìÈ­ Á¾·á ½Ã ¸¶Áö¸· ½º¹«µùµÈ °æ·Î·Î °íÁ¤
+                line.enabled = true;
+                line.positionCount = smoothDisplay.Count;
+                if (smoothDisplay.Count > 0)
+                    line.SetPositions(smoothDisplay.ToArray());
+            }
+        }
+
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Àç»ý ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        IEnumerator PlaybackAlongPath()
+        {
+            var path = playbackSmoothedPath ? smoothDisplay : rawPoints;
+            if (path.Count < 2) yield break;
+
+            SuppressPhysics();
+
+            // ÄÝ¹éÈ£Ãâ
+            OnStartPlayBack.Invoke();
+
+            // ½ÃÀÛÁ¡ ½º³À
+            transform.position = path[0];
+
+            for (int i = 0; i < path.Count - 1; i++)
+            {
+                Vector3 a = path[i];
+                Vector3 b = path[i + 1];
+
+                float segDuration;
+                if (useRecordedTiming && !playbackSmoothedPath && rawTimes.Count == rawPoints.Count)
+                {
+                    segDuration = Mathf.Max(0.0001f, rawTimes[i + 1] - rawTimes[i]);
+                }
+                else
+                {
+                    float dist = Vector3.Distance(a, b);
+                    segDuration = Mathf.Max(0.0001f, dist / Mathf.Max(0.0001f, playbackSpeed));
+                }
+
+                float t = 0f;
+                while (t < segDuration)
+                {
+                    t += Time.deltaTime;
+                    float u = Mathf.Clamp01(t / segDuration);
+                    transform.position = Vector3.Lerp(a, b, u);
+                    yield return null;
+                }
+            }
+
+            RestorePhysics();
+            playbackCo = null;
 
 #if OCULUS_INTEGRATION_PRESENT
         if (handGrab) handGrab.enabled = true; // ´Ù½Ã Àâ±â Çã¿ë
 #endif
-    }
-
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ÃÊ±âÈ­(¿ÏÀü ¸®¼Â) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    public void ClearPath()
-    {
-        OnClearPath?.Invoke();
-
-        rawPoints.Clear();
-        rawTimes.Clear();
-        smoothDisplay.Clear();
-
-        line.positionCount = 0;
-        line.enabled = false;
-
-        hasPath = false;
-        isRecording = false;
-
-        SuppressPhysics();
-    }
-
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Ç¥½Ã¿ë Poke ¹öÆ° ÆäÀÌµå ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    void ShowPokeButton(bool show)
-    {
-        if (!pokeButtonRoot) return;
-
-        if (pokeFadeCo != null) StopCoroutine(pokeFadeCo);
-
-        if (!pokeCanvasGroup)
-        {
-            pokeButtonRoot.SetActive(show);
         }
-        else
+
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ÃÊ±âÈ­(¿ÏÀü ¸®¼Â) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        public void ClearPath()
         {
-            pokeButtonRoot.SetActive(true);
-            pokeFadeCo = StartCoroutine(FadePoke(show ? 1f : 0f, 0.15f, () =>
+            OnClearPath?.Invoke();
+
+            rawPoints.Clear();
+            rawTimes.Clear();
+            smoothDisplay.Clear();
+
+            line.positionCount = 0;
+            line.enabled = false;
+
+            hasPath = false;
+            isRecording = false;
+
+            SuppressPhysics();
+        }
+
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ Ç¥½Ã¿ë Poke ¹öÆ° ÆäÀÌµå ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        void ShowPokeButton(bool show)
+        {
+            if (!pokeButtonRoot) return;
+
+            if (pokeFadeCo != null) StopCoroutine(pokeFadeCo);
+
+            if (!pokeCanvasGroup)
             {
-                if (!show) pokeButtonRoot.SetActive(false);
-            }));
+                pokeButtonRoot.SetActive(show);
+            }
+            else
+            {
+                pokeButtonRoot.SetActive(true);
+                pokeFadeCo = StartCoroutine(FadePoke(show ? 1f : 0f, 0.15f, () =>
+                {
+                    if (!show) pokeButtonRoot.SetActive(false);
+                }));
+            }
         }
-    }
 
-    IEnumerator FadePoke(float target, float dur, System.Action onDone)
-    {
-        float start = pokeCanvasGroup.alpha;
-        float t = 0f;
-        while (t < dur)
+        IEnumerator FadePoke(float target, float dur, System.Action onDone)
         {
-            t += Time.deltaTime;
-            pokeCanvasGroup.alpha = Mathf.Lerp(start, target, t / dur);
-            yield return null;
+            float start = pokeCanvasGroup.alpha;
+            float t = 0f;
+            while (t < dur)
+            {
+                t += Time.deltaTime;
+                pokeCanvasGroup.alpha = Mathf.Lerp(start, target, t / dur);
+                yield return null;
+            }
+            pokeCanvasGroup.alpha = target;
+            onDone?.Invoke();
         }
-        pokeCanvasGroup.alpha = target;
-        onDone?.Invoke();
-    }
 
-    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ¹°¸® ¾ïÁ¦/º¹±¸ ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-    void SuppressPhysics()
-    {
-        if (rb)
+        // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ ¹°¸® ¾ïÁ¦/º¹±¸ ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+        void SuppressPhysics()
         {
-            rb.isKinematic = true;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
+            if (rb)
+            {
+                rb.isKinematic = true;
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
 #if OCULUS_INTEGRATION_PRESENT
         if (handGrab) handGrab.enabled = false; // ÀçÁý±â ¹æÁö
 #endif
-    }
-
-    void RestorePhysics()
-    {
-        if (rb) rb.isKinematic = false;
-    }
-}
-
-// ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ À¯Æ¿(½º¹«´õ/½ºÇÃ¶óÀÎ) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
-public class HandPathSmoother
-{
-    public SmoothingMode mode = SmoothingMode.OneEuro;
-
-    // Exponential
-    public float expAlpha = 0.25f;
-    Vector3 expPrev;
-    bool expFirst = true;
-
-    // Moving Average
-    public int maWindow = 5;
-    readonly Queue<Vector3> maQueue = new();
-
-    // One Euro
-    class OneEuroFilter
-    {
-        float freq, minCutoff, beta, dCutoff;
-        Vector3 xPrev, dxPrev;
-        bool first = true;
-
-        public OneEuroFilter(float freq, float minCutoff, float beta, float dCutoff)
-        {
-            this.freq = Mathf.Max(1e-3f, freq);
-            this.minCutoff = Mathf.Max(1e-3f, minCutoff);
-            this.beta = Mathf.Max(0f, beta);
-            this.dCutoff = Mathf.Max(1e-3f, dCutoff);
         }
 
-        float Alpha(float cutoff, float dt)
+        void RestorePhysics()
         {
-            float tau = 1f / (2f * Mathf.PI * cutoff);
-            return 1f / (1f + tau / Mathf.Max(1e-4f, dt));
+            if (rb) rb.isKinematic = false;
         }
+    }
 
-        public Vector3 Filter(Vector3 x, float dt)
+    // ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡ À¯Æ¿(½º¹«´õ/½ºÇÃ¶óÀÎ) ¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡¦¡
+    public class HandPathSmoother
+    {
+        public SmoothingMode mode = SmoothingMode.OneEuro;
+
+        // Exponential
+        public float expAlpha = 0.25f;
+        Vector3 expPrev;
+        bool expFirst = true;
+
+        // Moving Average
+        public int maWindow = 5;
+        readonly Queue<Vector3> maQueue = new();
+
+        // One Euro
+        class OneEuroFilter
         {
-            if (first)
+            float freq, minCutoff, beta, dCutoff;
+            Vector3 xPrev, dxPrev;
+            bool first = true;
+
+            public OneEuroFilter(float freq, float minCutoff, float beta, float dCutoff)
             {
-                first = false;
-                xPrev = x;
-                dxPrev = Vector3.zero;
-                return x;
+                this.freq = Mathf.Max(1e-3f, freq);
+                this.minCutoff = Mathf.Max(1e-3f, minCutoff);
+                this.beta = Mathf.Max(0f, beta);
+                this.dCutoff = Mathf.Max(1e-3f, dCutoff);
             }
 
-            Vector3 dx = (x - xPrev) / Mathf.Max(1e-4f, dt);
-            float aD = Alpha(dCutoff, dt);
-            Vector3 dxHat = Vector3.Lerp(dxPrev, dx, aD);
-
-            float cutoff = minCutoff + beta * dxHat.magnitude;
-            float a = Alpha(cutoff, dt);
-
-            Vector3 xHat = Vector3.Lerp(xPrev, x, a);
-            xPrev = xHat;
-            dxPrev = dxHat;
-            return xHat;
-        }
-    }
-
-    OneEuroFilter oneEuro = new OneEuroFilter(90f, 1.2f, 0.4f, 1.0f);
-
-    public void ConfigureOneEuro(float freq, float minCutoff, float beta, float dCutoff)
-    {
-        oneEuro = new OneEuroFilter(freq, minCutoff, beta, dCutoff);
-    }
-
-    public Vector3 Step(Vector3 raw, float dt)
-    {
-        switch (mode)
-        {
-            case SmoothingMode.None:
-                return raw;
-
-            case SmoothingMode.Exponential:
-                if (expFirst) { expFirst = false; expPrev = raw; return raw; }
-                expPrev = Vector3.Lerp(expPrev, raw, Mathf.Clamp01(expAlpha));
-                return expPrev;
-
-            case SmoothingMode.MovingAverage:
-                maQueue.Enqueue(raw);
-                while (maQueue.Count > Mathf.Max(1, maWindow)) maQueue.Dequeue();
-                Vector3 sum = Vector3.zero;
-                foreach (var v in maQueue) sum += v;
-                return sum / maQueue.Count;
-
-            case SmoothingMode.OneEuro:
-            default:
-                return oneEuro.Filter(raw, Mathf.Max(1e-3f, dt));
-        }
-    }
-}
-
-public static class CatmullRom
-{
-    public static Vector3 CR(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
-    {
-        float t2 = t * t;
-        float t3 = t2 * t;
-        return 0.5f * (2f * p1 +
-                       (-p0 + p2) * t +
-                       (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 +
-                       (-p0 + 3f * p1 - 3f * p2 + p3) * t3);
-    }
-
-    /// <summary>
-    /// ¿øº» Æ÷ÀÎÆ®¸¦ Catmull-RomÀ¸·Î º¸°£ ÈÄ, ÀÏÁ¤ °Å¸® °£°ÝÀ¸·Î ¸®»ùÇÃ(arc-length ±Ù»ç).
-    /// </summary>
-    public static List<Vector3> ResampleSmooth(IList<Vector3> pts, float spacing)
-    {
-        var res = new List<Vector3>();
-        if (pts == null || pts.Count < 2) return res;
-
-        var p = new List<Vector3>(pts.Count + 2);
-        p.Add(pts[0] + (pts[0] - pts[1]));     // ¾Õ °¡Â¥ Æ÷ÀÎÆ®
-        for (int i = 0; i < pts.Count; i++) p.Add(pts[i]);
-        p.Add(pts[^1] + (pts[^1] - pts[^2]));  // µÚ °¡Â¥ Æ÷ÀÎÆ®
-
-        // ±¸°£´ç »ùÇÃ
-        const int SUB = 8;
-        var dense = new List<Vector3>();
-        for (int i = 0; i < p.Count - 3; i++)
-        {
-            for (int s = 0; s <= SUB; s++)
+            float Alpha(float cutoff, float dt)
             {
-                float t = s / (float)SUB;
-                dense.Add(CR(p[i], p[i + 1], p[i + 2], p[i + 3], t));
+                float tau = 1f / (2f * Mathf.PI * cutoff);
+                return 1f / (1f + tau / Mathf.Max(1e-4f, dt));
+            }
+
+            public Vector3 Filter(Vector3 x, float dt)
+            {
+                if (first)
+                {
+                    first = false;
+                    xPrev = x;
+                    dxPrev = Vector3.zero;
+                    return x;
+                }
+
+                Vector3 dx = (x - xPrev) / Mathf.Max(1e-4f, dt);
+                float aD = Alpha(dCutoff, dt);
+                Vector3 dxHat = Vector3.Lerp(dxPrev, dx, aD);
+
+                float cutoff = minCutoff + beta * dxHat.magnitude;
+                float a = Alpha(cutoff, dt);
+
+                Vector3 xHat = Vector3.Lerp(xPrev, x, a);
+                xPrev = xHat;
+                dxPrev = dxHat;
+                return xHat;
             }
         }
 
-        res.Add(dense[0]);
-        float acc = 0f;
-        for (int i = 1; i < dense.Count; i++)
+        OneEuroFilter oneEuro = new OneEuroFilter(90f, 1.2f, 0.4f, 1.0f);
+
+        public void ConfigureOneEuro(float freq, float minCutoff, float beta, float dCutoff)
         {
-            float d = Vector3.Distance(dense[i - 1], dense[i]);
-            acc += d;
-            if (acc >= spacing)
+            oneEuro = new OneEuroFilter(freq, minCutoff, beta, dCutoff);
+        }
+
+        public Vector3 Step(Vector3 raw, float dt)
+        {
+            switch (mode)
             {
-                res.Add(dense[i]);
-                acc = 0f;
+                case SmoothingMode.None:
+                    return raw;
+
+                case SmoothingMode.Exponential:
+                    if (expFirst) { expFirst = false; expPrev = raw; return raw; }
+                    expPrev = Vector3.Lerp(expPrev, raw, Mathf.Clamp01(expAlpha));
+                    return expPrev;
+
+                case SmoothingMode.MovingAverage:
+                    maQueue.Enqueue(raw);
+                    while (maQueue.Count > Mathf.Max(1, maWindow)) maQueue.Dequeue();
+                    Vector3 sum = Vector3.zero;
+                    foreach (var v in maQueue) sum += v;
+                    return sum / maQueue.Count;
+
+                case SmoothingMode.OneEuro:
+                default:
+                    return oneEuro.Filter(raw, Mathf.Max(1e-3f, dt));
             }
         }
-        if (res[^1] != dense[^1]) res.Add(dense[^1]);
-        return res;
+    }
+
+    public static class CatmullRom
+    {
+        public static Vector3 CR(Vector3 p0, Vector3 p1, Vector3 p2, Vector3 p3, float t)
+        {
+            float t2 = t * t;
+            float t3 = t2 * t;
+            return 0.5f * (2f * p1 +
+                           (-p0 + p2) * t +
+                           (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 +
+                           (-p0 + 3f * p1 - 3f * p2 + p3) * t3);
+        }
+
+        /// <summary>
+        /// ¿øº» Æ÷ÀÎÆ®¸¦ Catmull-RomÀ¸·Î º¸°£ ÈÄ, ÀÏÁ¤ °Å¸® °£°ÝÀ¸·Î ¸®»ùÇÃ(arc-length ±Ù»ç).
+        /// </summary>
+        public static List<Vector3> ResampleSmooth(IList<Vector3> pts, float spacing)
+        {
+            var res = new List<Vector3>();
+            if (pts == null || pts.Count < 2) return res;
+
+            var p = new List<Vector3>(pts.Count + 2);
+            p.Add(pts[0] + (pts[0] - pts[1]));     // ¾Õ °¡Â¥ Æ÷ÀÎÆ®
+            for (int i = 0; i < pts.Count; i++) p.Add(pts[i]);
+            p.Add(pts[^1] + (pts[^1] - pts[^2]));  // µÚ °¡Â¥ Æ÷ÀÎÆ®
+
+            // ±¸°£´ç »ùÇÃ
+            const int SUB = 8;
+            var dense = new List<Vector3>();
+            for (int i = 0; i < p.Count - 3; i++)
+            {
+                for (int s = 0; s <= SUB; s++)
+                {
+                    float t = s / (float)SUB;
+                    dense.Add(CR(p[i], p[i + 1], p[i + 2], p[i + 3], t));
+                }
+            }
+
+            res.Add(dense[0]);
+            float acc = 0f;
+            for (int i = 1; i < dense.Count; i++)
+            {
+                float d = Vector3.Distance(dense[i - 1], dense[i]);
+                acc += d;
+                if (acc >= spacing)
+                {
+                    res.Add(dense[i]);
+                    acc = 0f;
+                }
+            }
+            if (res[^1] != dense[^1]) res.Add(dense[^1]);
+            return res;
+        }
     }
 }
